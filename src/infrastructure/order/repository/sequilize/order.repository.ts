@@ -26,9 +26,9 @@ export default class OrderRepository implements OrderRepositoryInterface {
   }
 
   async update(entity: Order): Promise<void> {
+    logging: console.log, // log SQL statement to console
     await OrderModel.update(
       {
-        customer_id: entity.customerId,
         total: entity.total(),
         items: entity.items.map((item) => ({
           id: item.id,
@@ -37,12 +37,13 @@ export default class OrderRepository implements OrderRepositoryInterface {
           product_id: item.productId,
           quantity: item.quantity,
         })),
-      }, 
-      {               
+      },
+      {
         where: {
           id: entity.id,
-        },
-      },
+        }
+        
+      }
     );    
   }
 
