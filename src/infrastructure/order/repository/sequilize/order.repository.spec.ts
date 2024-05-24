@@ -83,6 +83,7 @@ describe("Order repository test", () => {
   });
 
   it("should update a order", async () => {
+
     const customerRepository = new CustomerRepository();
     const customer = new Customer("123", "Customer 1");
     const address = new Address("Street 1", 1, "Zipcode 1", "City 1");
@@ -93,8 +94,6 @@ describe("Order repository test", () => {
     const product = new Product("123", "Product 1", 10);
     await productRepository.create(product);
 
-
-
     const ordemItem = new OrderItem(
       "1",
       product.name,
@@ -104,7 +103,6 @@ describe("Order repository test", () => {
     );
 
     let order = new Order("123", "123", [ordemItem]);
-    
 
     const orderRepository = new OrderRepository();
     await orderRepository.create(order);
@@ -113,7 +111,6 @@ describe("Order repository test", () => {
       where: { id: order.id },
       include: ["items"],
     });
-
 
     expect(orderModel.toJSON()).toStrictEqual({
       id: "123",
@@ -142,26 +139,36 @@ describe("Order repository test", () => {
       1
     );
     order = new Order("123", "123", [ordemItem,ordemItem2]);
-   
-    const sequelize = OrderModel.sequelize;
-    await sequelize.transaction(async (t) => {
-      await OrderItemModel.destroy({
-        where: { order_id: order.id },
-        transaction: t,
-      });
-      const items = order.items.map((item) => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        product_id: item.productId,
-        quantity: item.quantity,
-        order_id: order.id,
-      }));
-      await OrderItemModel.bulkCreate(items, { transaction: t });
-      await OrderModel.update(
-        { total: order.total() },
-        { where: { id: order.id }, transaction: t }
-      );
+
+    await orderRepository.update(order);
+
+    orderModel = await OrderModel.findOne({
+      where: { id: order.id },
+      include: ["items"],
+    });
+
+    expect(orderModel.toJSON()).toStrictEqual({
+      id: "123",
+      customer_id: "123",
+      total: order.total(),
+      items: [
+        {
+          id: ordemItem.id,
+          name: ordemItem.name,
+          price: ordemItem.price,
+          quantity: ordemItem.quantity,
+          order_id: "123",
+          product_id: "123",
+        },
+        {
+          id: ordemItem2.id,
+          name: ordemItem2.name,
+          price: ordemItem2.price,
+          quantity: ordemItem2.quantity,
+          order_id: "123",
+          product_id: "456",
+        }
+      ],
     });
   });
 
